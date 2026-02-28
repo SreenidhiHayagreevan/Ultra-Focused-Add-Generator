@@ -1,58 +1,124 @@
-# TrendHijack
+# Ultra-Focused-Add-Generator
+
+Ultra-Focused-Add-Generator is a hackathon-style experimental repository
+built around Jupyter notebooks and lightweight web components. It
+focuses on rapid prototyping for ultra-targeted AI content generation
+and scouting workflows.
+
+------------------------------------------------------------------------
+
+## Repository Structure
+
+### Notebooks
+
+-   `Reka_Ai.ipynb`
+-   `Travily_Youtori.ipynb`
+-   `multimodal_ai_twitter_scout.ipynb`
+-   `realtime_5min_scout.ipynb`
+
+These notebooks contain prototype pipelines for AI-driven generation,
+multimodal exploration, and real-time scouting experiments.
+
+### Web Folder
+
+-   `explore-america/`\
+    Contains supporting frontend or static web components (if
+    applicable).
+
+### TrendHijack (Sparks Project)
+
+AI-powered viral content generation pipeline with a Flask backend and static dashboard frontend.
+
+```text
+backend/
+  app.py
+  tavily_agent.py
+  yutori_agent.py
+  reka_agent.py
+  kling_agent.py
+  pipeline.py
+  config.py
+  requirements.txt
+  Dockerfile
+frontend/
+  index.html
+  styles.css
+  config.js
+  app.js
+  Dockerfile
+.env.example
+render.yaml
+```
+
+------------------------------------------------------------------------
+
+## Getting Started
+
+### 1. Clone the Repository
+
+``` bash
+git clone https://github.com/SreenidhiHayagreevan/Ultra-Focused-Add-Generator.git
+cd Ultra-Focused-Add-Generator
+```
+
+### 2. Create Virtual Environment
+
+``` bash
+python -m venv .venv
+source .venv/bin/activate   # macOS/Linux
+.venv\Scripts\activate    # Windows
+```
+
+### 3. Install Dependencies
+
+If a `requirements.txt` file exists:
+
+``` bash
+pip install -r requirements.txt
+```
+
+Otherwise install minimal dependencies:
+
+``` bash
+pip install jupyter ipykernel
+```
+
+### 4. Launch Jupyter
+
+``` bash
+jupyter notebook
+```
+
+Open and run any notebook to begin experimenting.
+
+------------------------------------------------------------------------
+
+## TrendHijack Backend Setup
+
+### Environment Setup
+
+Create `backend/.env` from `.env.example`:
+
+```bash
+cd backend
+cp ../.env.example .env
+```
+
+Fill keys in `backend/.env` and never commit this file.
 
 > WARNING
 > - Never commit `.env`.
 > - `.env.example` must never contain real keys.
 > - Rotate keys immediately if they were ever committed.
 
-AI-powered viral content generation pipeline with a Flask backend and static dashboard frontend.
-
-## Project Structure
-
-```text
-trendhijack/
-  backend/
-    app.py
-    tavily_agent.py
-    yutori_agent.py
-    reka_agent.py
-    kling_agent.py
-    pipeline.py
-    config.py
-    requirements.txt
-    Dockerfile
-  frontend/
-    index.html
-    styles.css
-    config.js
-    app.js
-    Dockerfile
-  .env.example
-  render.yaml
-  README.md
-```
-
-## Environment Setup
-
-Create `backend/.env` from `.env.example` (not repo root):
-
-```bash
-cd trendhijack/backend
-cp ../.env.example .env
-```
-
-Fill keys in `backend/.env` and never commit this file.
-
 ### Demo Without Keys
 
 Set `SMOKE_MODE=1` in `backend/.env` to run a deterministic no-network demo.
 
-## Local Run
-
-### 1) Backend
+### Run Backend
 
 ```bash
-cd trendhijack/backend
+cd backend
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -60,80 +126,69 @@ python app.py
 ```
 
 Backend uses `PORT` from env with default `5050`.
-In local `__main__` mode, if the selected port is busy it tries: `5051`, `5052`, `5053`.
 
-### 2) Frontend
+### Run Frontend
 
 ```bash
-cd trendhijack/frontend
+cd frontend
 python3 -m http.server 3000
 ```
 
 Frontend runs at `http://localhost:3000`.
-For local backend, use `http://localhost:5050`.
 
-## Quick Demo Inputs (15s)
+### Quick Demo Inputs (15s)
 
 - `brand=Render`
 - `competitor=Vercel`
 - `location=San Francisco`
 
-## API Endpoints
+### API Endpoints
 
-- `GET /api/health`
-  - Returns service availability and `smoke_mode`.
+- `GET /api/health` - Returns service availability and `smoke_mode`.
+- `GET /api/selftest` - Local import/function self-test only.
+- `POST /api/generate` - Start content generation job
+- `GET /api/job/<job_id>` - Get job status and result
+- `POST /api/generate_sync` - Synchronous generation
 
-- `GET /api/selftest`
-  - Local import/function self-test only.
-  - Does not call external APIs.
+------------------------------------------------------------------------
 
-- `POST /api/generate`
-  - Body:
-    ```json
-    { "brand": "Render", "competitor": "Vercel", "location": "San Francisco" }
-    ```
-  - Response: `202 Accepted`
-    ```json
-    { "job_id": "...", "status": "queued" }
-    ```
+## Environment Variables (If Required)
 
-- `GET /api/job/<job_id>`
-  - Returns full job object including:
-    - `status`: `queued | running | done | error`
-    - `progress`: `{ step, percent, message }`
-    - `result` or `error`
+Some notebooks may require API keys.
 
-- `POST /api/generate_sync`
-  - Body: same as `/api/generate`
-  - Response: direct pipeline result on success, or `500` on failure.
+Create a `.env` file:
 
-- Legacy compatibility aliases:
-  - `POST /api/pipeline/run` -> alias of `POST /api/generate`
-  - `GET /api/pipeline/status/<job_id>` -> alias of `GET /api/job/<job_id>`
-  - `GET /api/pipeline/jobs` -> job summaries (`id`, `status`, `created_at`)
+``` bash
+touch .env
+```
 
-## Render Deployment (2 Services)
+Example:
+
+``` bash
+PROVIDER_API_KEY="your_api_key_here"
+```
+
+Do NOT commit your `.env` file.
+
+------------------------------------------------------------------------
+
+## Render Deployment
 
 This repo includes a Render Blueprint in `render.yaml`:
 
 1. `trendhijack-api` (Flask backend via Docker)
 2. `trendhijack-frontend` (dashboard via Docker)
 
-### Exact Render Steps
+See `DEPLOYMENT.md` for detailed deployment instructions.
 
-1. Deploy the Blueprint from this repo (`render.yaml`).
-2. Copy the deployed backend URL from the `trendhijack-api` service.
-3. Set `trendhijack-frontend` env var `API_BASE` to that backend URL.
-4. Redeploy `trendhijack-frontend` so `config.js` gets updated.
+------------------------------------------------------------------------
 
-## Render Runtime Notes
+## Contributing
 
-- Backend container binds `0.0.0.0:$PORT` via gunicorn.
-- Backend gunicorn stays at `--workers 1` to keep in-memory job state consistent.
-- Frontend container serves static files (`index.html`, `config.js`, `app.js`) with `python -m http.server` on `$PORT`.
-- Frontend `API_BASE` injection happens on container startup before serving files.
+Pull requests and improvements are welcome.
 
-## Notes
+------------------------------------------------------------------------
 
-- No database is used; jobs are in-memory per process.
-- For production multi-instance/multi-worker reliability, move jobs to Redis or a database.
+## License
+
+No license is currently specified.
