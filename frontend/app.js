@@ -61,24 +61,6 @@ function applyPreset(brand, competitor, location) {
   locationInput.value = location;
 }
 
-async function getConfigJsApiBase() {
-  try {
-    const res = await fetch("config.js", { cache: "no-store" });
-    if (!res.ok) {
-      return "";
-    }
-    const text = await res.text();
-    const match = text.match(/window\.__API_BASE__\s*=\s*["']([^"']+)["']/);
-    const value = normalizeBase(match ? match[1] : "");
-    if (!value || value === "REPLACE_ME") {
-      return "";
-    }
-    return value;
-  } catch (_error) {
-    return "";
-  }
-}
-
 async function checkHealth(base) {
   try {
     const res = await fetch(`${base}/api/health`, { method: "GET" });
@@ -100,11 +82,10 @@ async function autoDetectApiBase() {
   }
 
   const configuredWindowBase = getConfiguredApiBase();
-  const configuredScriptBase = await getConfigJsApiBase();
   const storedBase = normalizeBase(localStorage.getItem(API_BASE_STORAGE_KEY) || "");
 
   const candidates = [];
-  for (const base of [configuredWindowBase, configuredScriptBase, storedBase, ...LOCALHOST_CANDIDATES]) {
+  for (const base of [configuredWindowBase, storedBase, ...LOCALHOST_CANDIDATES]) {
     const normalized = normalizeBase(base);
     if (normalized && !candidates.includes(normalized)) {
       candidates.push(normalized);
@@ -118,8 +99,11 @@ async function autoDetectApiBase() {
     }
   }
 
-  const fallback = configuredWindowBase || configuredScriptBase || storedBase || LOCALHOST_CANDIDATES[0];
+  const fallback = configuredWindowBase || storedBase || LOCALHOST_CANDIDATES[0];
   saveApiBase(fallback);
+  setOutputText(
+    `Backend health check failed for configured endpoints. Check API_BASE or backend status. Current base: ${fallback}`
+  );
 }
 
 function renderShortlist(shortlist) {
@@ -387,6 +371,14 @@ runBtn.addEventListener("click", async () => {
   }
 
   try {
+    const healthOk = await checkHealth(apiBase);
+    if (!healthOk) {
+      setOutputText(
+        `Backend is unreachable at ${apiBase}. Verify API_BASE, backend deployment, and CORS settings.`
+      );
+      return;
+    }
+
     setOutputText("Starting pipeline...");
 
     const res = await fetch(`${apiBase}/api/generate`, {

@@ -1,66 +1,67 @@
-# TrendHijack Deployment Runbook (Render Blueprint)
+# TrendHijack Render Deployment (10-Minute Runbook)
 
-## 1) Deploy the Blueprint
+## 1) Deploy Blueprint (Render Dashboard)
 1. Push this repo to GitHub.
-2. In Render dashboard, click **New +** (top-right).
+2. In Render click **New +**.
 3. Click **Blueprint**.
-4. Connect/select your GitHub repo.
-5. Render detects `render.yaml`; click **Apply** / **Create New Services**.
-6. Wait for both services to build:
-   - `trendhijack-api`
-   - `trendhijack-frontend`
+4. Select your repo (Render reads `render.yaml`).
+5. Click **Apply** / **Create New Services**.
+6. Wait for both services:
+   - `trendhijack-api` (backend)
+   - `trendhijack-frontend` (UI)
 
-## 2) Backend env vars (`trendhijack-api`)
-Set in Render: **Service > Environment**.
+## 2) Set Backend Env Vars (`trendhijack-api`)
+Render -> `trendhijack-api` -> **Environment**.
 
 Required:
 - `TAVILY_API_KEY`
 - `REKA_API_KEY`
 - `KIE_API_KEY`
 
-Recommended/default:
-- `FLASK_ENV=production`
-
 Optional:
-- `REKA_API_KEY_FALLBACK`
 - `TWITTER_BEARER_TOKEN`
 - `YOUTUBE_API_KEY`
-- `SMOKE_MODE` (`0` normal, `1` deterministic demo mode)
+- `REKA_API_KEY_FALLBACK`
+- `SMOKE_MODE` (`1` for deterministic demo mode)
 
-## 3) Frontend env vars (`trendhijack-frontend`)
-Set in Render: **Service > Environment**.
+Recommended:
+- `FLASK_ENV=production`
+
+## 3) Set Frontend Env Vars (`trendhijack-frontend`)
+Render -> `trendhijack-frontend` -> **Environment**.
 
 Required:
 - `API_BASE`
 
-Value for `API_BASE`:
-- Use the backend public URL from `trendhijack-api` (for example: `https://trendhijack-api.onrender.com`).
+Value:
+- Set to backend public URL, for example:
+  - `https://trendhijack-api.onrender.com`
 
-After setting/changing `API_BASE`, redeploy frontend.
+Then **Redeploy `trendhijack-frontend`**.
 
-## 4) Validate deployment (copy/paste)
-Set backend URL:
+## 4) Validate Deployment
+Set your backend URL:
 
 ```bash
 export BACKEND_URL="https://trendhijack-api.onrender.com"
 ```
 
-Health check:
+Health:
 
 ```bash
 curl -s "$BACKEND_URL/api/health" | jq
 ```
 
-Self-test (imports/functions only, no external API calls):
+Self-test:
 
 ```bash
 curl -s "$BACKEND_URL/api/selftest" | jq
 ```
 
-SMOKE_MODE test:
-1. In Render backend env, set `SMOKE_MODE=1`.
-2. Redeploy `trendhijack-api`.
-3. Trigger async job:
+SMOKE_MODE demo run:
+1. Set `SMOKE_MODE=1` on backend env.
+2. Redeploy backend.
+3. Start async job:
 
 ```bash
 curl -s -X POST "$BACKEND_URL/api/generate" \
@@ -68,18 +69,27 @@ curl -s -X POST "$BACKEND_URL/api/generate" \
   -d '{"brand":"Render","competitor":"Vercel","location":"San Francisco"}' | jq
 ```
 
-Expected: HTTP `202` with `job_id` and `status: "queued"`.
+Expected: `202` with `job_id` and `status: "queued"`.
 
-## 5) 60-second judge demo script
-1. Open frontend URL (`trendhijack-frontend`).
-2. Click **Demo Preset: Render vs Vercel**.
-3. Confirm Backend URL field points to your Render API URL.
-4. Click **Run Pipeline**.
-5. While it runs, say:
-   - "This pipeline discovers trends, analyzes creative direction, and generates a video concept end-to-end."
-6. When done, show:
-   - **Trend Summary** panel
-   - **What we found** counts + source links
-   - **Director Brief** JSON
-   - **Generated Video** player
-   - **Explain** section for transparent pipeline trace
+## 5) Quick UI Verification
+1. Open frontend URL: `https://<your-frontend>.onrender.com`
+2. Click **Demo Preset: Render vs Vercel**
+3. Click **Run Pipeline**
+4. Confirm status progresses to `done` and results render.
+
+## Common Render Failures
+- Wrong `API_BASE`:
+  - Symptom: UI says backend health check failed.
+  - Fix: set frontend `API_BASE` to backend URL and redeploy frontend.
+- Backend not binding `$PORT`:
+  - Symptom: backend fails to boot.
+  - Fix: backend starts with gunicorn `--bind 0.0.0.0:$PORT` (already configured).
+- CORS blocked:
+  - Symptom: browser fetch errors.
+  - Fix: backend CORS is enabled globally in Flask app; ensure requests target correct backend URL.
+- Multi-worker job loss:
+  - Symptom: job IDs disappear during polling.
+  - Fix: backend runs `--workers 1` (in-memory jobs are process-local).
+- Missing env vars:
+  - Symptom: pipeline fails in normal mode.
+  - Fix: set required backend keys, or run with `SMOKE_MODE=1` for demo.
