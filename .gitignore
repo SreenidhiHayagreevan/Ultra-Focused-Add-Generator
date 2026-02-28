@@ -33,6 +33,10 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# videos (served from S3)
+*.mov
+*.mp4
+
 # vercel
 .vercel
 
