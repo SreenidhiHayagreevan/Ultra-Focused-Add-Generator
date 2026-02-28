@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TrendHijack Dashboard</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>TrendHijack</h1>
+      <p class="subtitle">AI-powered viral content pipeline</p>
+
+      <section class="panel">
+        <label for="apiBase">Backend URL</label>
+        <input id="apiBase" type="text" placeholder="https://trendhijack-api.onrender.com" />
+
+        <label for="brand">Brand</label>
+        <input id="brand" type="text" placeholder="e.g., Render" />
+
+        <label for="competitor">Competitor</label>
+        <input id="competitor" type="text" placeholder="e.g., Vercel" />
+
+        <label for="location">Location</label>
+        <input id="location" type="text" value="San Francisco" placeholder="e.g., San Francisco" />
+
+        <button id="presetRenderBtn" type="button">Demo Preset: Render vs Vercel</button>
+        <button id="presetClaudeBtn" type="button">Demo Preset: Claude vs OpenAI</button>
+        <button id="runBtn" type="button">Run Pipeline</button>
+      </section>
+
+      <section class="panel">
+        <h2>Job Status</h2>
+        <div id="output">No jobs yet.</div>
+      </section>
+    </main>
+
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
